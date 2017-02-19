@@ -221,25 +221,41 @@ COL3="\e[31m"; # red
 l=0;
 q=0;
 
-echo ""
-while read line; do
-	if [[ ${line} =~ $REGEXP ]]; then
-		addip="1";
-		for i in ${IPARR[@]}; do
-			if [ "${i}" = "${BASH_REMATCH[$REGEXPIPPOS]}" ]; then
-				addip='0';
-			fi
-		done
+cmd_grep="$(which grep)"
+cmd_sed="$(which sed)"
+cmd_sort="$(which sort)"
+cmd_uniq="$(which uniq)"
 
-		if [ ${addip} = "1" ]; then
-			l=`expr $l + 1`;
-			IPARR[$l]=${BASH_REMATCH[$REGEXPIPPOS]};
-			iparrhash[${BASH_REMATCH[$REGEXPIPPOS]}]=1;
-		else
-			iparrhash["${BASH_REMATCH[$REGEXPIPPOS]}"]=`expr ${iparrhash[${BASH_REMATCH[$REGEXPIPPOS]}]} + 1`;
+echo ""
+if [ "$cmd_grep" != "" -a "$cmd_sed" != "" -a "$cmd_sort" != "" -a "$cmd_uniq" != "" ] ; then
+	echo "using commands: grep, sed, sort, uniq"
+	while read line; do
+		args=($line)
+		iparrhash[${args[1]}]=${args[0]}
+	done < <($cmd_grep -E "$REGEXP" $LOGFILE | $cmd_sed 's/.*[=| ]\([0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\).*/\1/' | sort | uniq -c)
+else 
+	while read line; do
+		if [[ ${line} =~ $REGEXP ]]; then
+			addip="1";
+			for i in ${IPARR[@]}; do
+				if [ "${i}" = "${BASH_REMATCH[$REGEXPIPPOS]}" ]; then
+					addip='0';
+					break
+				fi
+			done
+
+			if [ ${addip} = "1" ]; then
+				l=`expr $l + 1`;
+				IPARR[$l]=${BASH_REMATCH[$REGEXPIPPOS]};
+				iparrhash[${BASH_REMATCH[$REGEXPIPPOS]}]=1;
+			else
+				iparrhash["${BASH_REMATCH[$REGEXPIPPOS]}"]=`expr ${iparrhash[${BASH_REMATCH[$REGEXPIPPOS]}]} + 1`;
+			fi
 		fi
-	fi
-done <$LOGFILE
+	done <$LOGFILE
+fi
+
+echo "finished reading logfile"
 
 if [ ${#iparrhash[@]} -eq 0 ]; then
 	echo -e "Nothing to do here, exit.\n";
