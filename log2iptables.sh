@@ -232,7 +232,7 @@ if [ "$cmd_grep" != "" -a "$cmd_sed" != "" -a "$cmd_sort" != "" -a "$cmd_uniq" !
 	while read line; do
 		args=($line)
 		iparrhash[${args[1]}]=${args[0]}
-	done < <($cmd_grep -E "$REGEXP" $LOGFILE | $cmd_sed 's/.*[=| ]\([0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\).*/\1/' | sort | uniq -c)
+	done < <($cmd_grep --text -E "$REGEXP" $LOGFILE | $cmd_sed 's/.*[=| ]\([0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\).*/\1/' | sort | uniq -c)
 else 
 	while read line; do
 		if [[ ${line} =~ $REGEXP ]]; then
